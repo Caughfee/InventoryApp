@@ -1,0 +1,49 @@
+name: Deploy Lambda Functions
+
+on:
+  push:
+    branches: [ main ]
+    # Only run when any of the Lambda function files change
+    paths:
+      - add_inventory_item.py
+      - delete_inventory_item.py
+      - get_all_inventory_items.py
+      - get_inventory_item.py
+      - get_location_inventory_items.py
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install zip tool
+        uses: montudor/action-zip@v1
+
+      - name: Create Zip file for Lambda functions
+        run: zip -r code.zip .
+
+      - name: AWS CLI v2
+        uses: imehedi/actions-awscli-v2@latest
+        with:
+          args: |
+            lambda update-function-code \
+              --function-name arn:aws:lambda:us-east-1:093017772388:function:get_all_inventory_items \
+              --zip-file fileb://code.zip
+            && lambda update-function-code \
+              --function-name arn:aws:lambda:us-east-1:093017772388:function:get_inventory_item \
+              --zip-file fileb://code.zip
+            && lambda update-function-code \
+              --function-name arn:aws:lambda:us-east-1:093017772388:function:add_inventory__item \
+              --zip-file fileb://code.zip
+            && lambda update-function-code \
+              --function-name arn:aws:lambda:us-east-1:093017772388:function:delete_inventory_item \
+              --zip-file fileb://code.zip
+            && lambda update-function-code \
+              --function-name arn:aws:lambda:us-east-1:093017772388:function:get_location_inventory_items \
+              --zip-file fileb://code.zip
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "us-east-1"
